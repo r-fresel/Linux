@@ -3,6 +3,10 @@
 # ############################################
 # Set up jackd and a2jmidid and start qjackctl
 # ############################################
+#
+# TODO
+# - select from list of multiple cards/devices?
+# - passing arguments at start?
 
 
 audio_interface="Scarlett 18i20 USB"
@@ -29,8 +33,7 @@ get_audio_interface () {
 	if [ $card_exists = 0 ]; then
 		printf '%s exists.\n' "$user_audio_interface"
 		aplay --list-devices | \
-			grep \
-				--ignore-case $user_audio_interface
+			grep --ignore-case $user_audio_interface
 	fi
 }
 
@@ -51,8 +54,26 @@ print_device_number () {
 		awk '{print substr($8, 1, length($8)-1)}'
 }
 
+start_jackd () {
+	jackd \
+		-d alsa \
+		-d hw:$card_number,$device_number \
+		&
+}
 
-get_audio_interface
-echo $card_exists
-print_card_number
-print_device_number
+start_a2jmidid () {
+	a2jmidid --export-hw &
+}
+
+start_qjackctl () {
+	qjackctl &
+}
+
+
+#audio_interface=$(get_audio_interface)
+card_number=$(print_card_number)
+device_number=$(print_device_number)
+
+start_jackd
+start_a2jmidid
+start_qjackctl
